@@ -39,7 +39,7 @@ function onFormSubmit(e) {
   }
   
   // 5. update the BU contact names
-  var buContact = getBuContactNames(productName);
+  var buContact = getBuContactNames(productName, 'Sales');
   if (buContact != '') {
     newReadinessSheet.getRange('E9').setValue(buContact);
     newReadinessSheet.getRange('E10').setValue(buContact);
@@ -49,7 +49,10 @@ function onFormSubmit(e) {
     newReadinessSheet.getRange('E14').setValue(buContact);
     newReadinessSheet.getRange('E15').setValue(buContact);
     newReadinessSheet.getRange('E16').setValue(buContact);
-    
+  }
+  
+  var buContact = getBuContactNames(productName, 'SA');
+  if (buContact != '') {    
     newReadinessSheet.getRange('E26').setValue(buContact);
     newReadinessSheet.getRange('E27').setValue(buContact);
     newReadinessSheet.getRange('E28').setValue(buContact);
@@ -59,7 +62,10 @@ function onFormSubmit(e) {
     newReadinessSheet.getRange('E32').setValue(buContact);
     newReadinessSheet.getRange('E33').setValue(buContact);
     newReadinessSheet.getRange('E34').setValue(buContact);
-    
+  }
+
+  buContact = getBuContactNames(productName, 'Consulting');
+  if (buContact != '') {    
     newReadinessSheet.getRange('E41').setValue(buContact);
   }
 
@@ -103,12 +109,14 @@ function getProductPageLink(productName) {
  * Retrieves the BU contact details for a particular product based on a lookup
  *
 *********************************************************************************/
-function getBuContactNames(productName) {
+function getBuContactNames(productName, role) {
   
   var lookupFile = DriveApp.getFileById("1HuvyzrEv9HChzstVeAwHtAFlHvT3EW5o2O8BH0O4XyI");
   var lookupSheet = SpreadsheetApp.open(lookupFile);
-
-  var column = lookupSheet.getRange("A:A");
+  var lookupSheet_Role = lookupSheet.getSheetByName(role);
+  lookupSheet_Role.activate();
+  
+  var column = lookupSheet_Role.getRange("A:A");
   var values = column.getValues();
   var row = 0;
   
@@ -121,6 +129,7 @@ function getBuContactNames(productName) {
     return lookupSheet.getRange("C"+productRow).getValue();
   }
 
+  SpreadsheetApp.flush();
   return '';
 }
 
@@ -148,4 +157,4 @@ function stringToDate(dateString) {
 ***********************************************************/
 function timestampStringToDate(dateTimeString) {
   return stringToDate(dateTimeString.split(' ')[0]);
-}  
+}
