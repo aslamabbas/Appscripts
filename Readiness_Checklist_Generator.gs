@@ -8,9 +8,8 @@ function onFormSubmit(e) {
   var productName = e.values[1];
   var productVersion = e.values[2];
   var productGaDate = e.values[3];
-  var usernameSubmitted = e.values[4];
-  
-  var gaDateAvailable = false;
+  var productBetaDate = e.values[4];
+  var usernameSubmitted = e.values[5];
   
   
   // 1. get a handle on the template sheet
@@ -23,13 +22,17 @@ function onFormSubmit(e) {
   // 2. make a copy of it and store in the Readiness folder
   var newReadinessSheetName = productName + " " + productVersion + " - Readiness Status and Info";
   var newReadinessSheetHandle = DriveApp.getFileById(templateFile.getId()).makeCopy(newReadinessSheetName, readinessFolder);
+  newReadinessSheetHandle.setOwner(usernameSubmitted);
 
   // 3. update the dates
   newReadinessSheet = SpreadsheetApp.open(newReadinessSheetHandle);
 
   if (productGaDate != '') {
-    newReadinessSheet.getRange('C3').setValue(stringToDate(productGaDate));
-    gaDateAvailable = true;
+    newReadinessSheet.getRange('C3').setValue(productGaDate);
+  }
+  
+  if (productBetaDate != '') {
+    newReadinessSheet.getRange('C4').setValue(productBetaDate);
   }
     
   // 4. update the PP link
@@ -41,7 +44,6 @@ function onFormSubmit(e) {
   // 5. update the BU contact names
   var buContact = getBuContactNames(productName, 'Sales');
   if (buContact != '') {
-    newReadinessSheet.getRange('E9').setValue(buContact);
     newReadinessSheet.getRange('E10').setValue(buContact);
     newReadinessSheet.getRange('E11').setValue(buContact);
     newReadinessSheet.getRange('E12').setValue(buContact);
@@ -49,11 +51,11 @@ function onFormSubmit(e) {
     newReadinessSheet.getRange('E14').setValue(buContact);
     newReadinessSheet.getRange('E15').setValue(buContact);
     newReadinessSheet.getRange('E16').setValue(buContact);
+    newReadinessSheet.getRange('E17').setValue(buContact);
   }
   
   var buContact = getBuContactNames(productName, 'SA');
   if (buContact != '') {    
-    newReadinessSheet.getRange('E26').setValue(buContact);
     newReadinessSheet.getRange('E27').setValue(buContact);
     newReadinessSheet.getRange('E28').setValue(buContact);
     newReadinessSheet.getRange('E29').setValue(buContact);
@@ -62,11 +64,12 @@ function onFormSubmit(e) {
     newReadinessSheet.getRange('E32').setValue(buContact);
     newReadinessSheet.getRange('E33').setValue(buContact);
     newReadinessSheet.getRange('E34').setValue(buContact);
+    newReadinessSheet.getRange('E35').setValue(buContact);
   }
 
   buContact = getBuContactNames(productName, 'Consulting');
   if (buContact != '') {    
-    newReadinessSheet.getRange('E41').setValue(buContact);
+    newReadinessSheet.getRange('E42').setValue(buContact);
   }
 
   // 6. set a note for changelog
@@ -113,10 +116,10 @@ function getBuContactNames(productName, role) {
   
   var lookupFile = DriveApp.getFileById("1HuvyzrEv9HChzstVeAwHtAFlHvT3EW5o2O8BH0O4XyI");
   var lookupSheet = SpreadsheetApp.open(lookupFile);
-  var lookupSheet_Role = lookupSheet.getSheetByName(role);
-  lookupSheet_Role.activate();
+  var lookupSheet_Consulting = lookupSheet.getSheetByName(role);
+  lookupSheet_Consulting.activate();
   
-  var column = lookupSheet_Role.getRange("A:A");
+  var column = lookupSheet_Consulting.getRange("A:A");
   var values = column.getValues();
   var row = 0;
   
@@ -132,23 +135,6 @@ function getBuContactNames(productName, role) {
   SpreadsheetApp.flush();
   return '';
 }
-
-/***********************************************************
- *
- * Converts a given string to a date object.
- * Assumes dd/mm/yyyy format
- *
-***********************************************************/
-function stringToDate(dateString) {
-  var dateArray = dateString.split("/");
-  var year = dateArray[2];
-  var month = dateArray[1];
-  var day = dateArray[0];
-  var date = new Date(year, month - 1, day);
-
-  return date;
-}
-
 
 /***********************************************************
  *
