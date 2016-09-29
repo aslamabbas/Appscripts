@@ -25,7 +25,15 @@ function onFormSubmit(e) {
   newReadinessSheetHandle.setOwner(usernameSubmitted);
 
   // 3. update the dates
-  newReadinessSheet = SpreadsheetApp.open(newReadinessSheetHandle);
+  var newReadinessSheet = SpreadsheetApp.open(newReadinessSheetHandle);
+  
+  // 4. Open INTERNAL: PnT Lookups file
+  var lookupFile = DriveApp.getFileById("1HuvyzrEv9HChzstVeAwHtAFlHvT3EW5o2O8BH0O4XyI");
+  var lookupSheet = SpreadsheetApp.open(lookupFile);  
+  
+  // 5. Add Common Editors for the Readiness sheet
+  var commonUsers = "lspangle@redhat.com, mrandall@redhat.com, mikmorri@redhat.com";                    
+//  addBuContactsAsEditors(newReadinessSheet, commonUsers);
 
   if (productGaDate != '') {
     newReadinessSheet.getRange('C3').setValue(productGaDate);
@@ -35,44 +43,47 @@ function onFormSubmit(e) {
     newReadinessSheet.getRange('C4').setValue(productBetaDate);
   }
     
-  // 4. update the PP link
-  var productPageLink = getProductPageLink(productName);
+  // 6. update the PP link
+  var productPageLink = getProductPageLink(productName, lookupSheet);
   if (productPageLink != '') {
     newReadinessSheet.getRange('C2').setValue(productPageLink);
   }
   
-  // 5. update the BU contact names
-  var buContact = getBuContactNames(productName, 'Sales');
+  // 7. update the BU contact names and editors
+  var buContact = getBuContacts(productName, 'Sales', lookupSheet);
   if (buContact != '') {
-    newReadinessSheet.getRange('E10').setValue(buContact);
-    newReadinessSheet.getRange('E11').setValue(buContact);
-    newReadinessSheet.getRange('E12').setValue(buContact);
-    newReadinessSheet.getRange('E13').setValue(buContact);
-    newReadinessSheet.getRange('E14').setValue(buContact);
-    newReadinessSheet.getRange('E15').setValue(buContact);
-    newReadinessSheet.getRange('E16').setValue(buContact);
-    newReadinessSheet.getRange('E17').setValue(buContact);
+    newReadinessSheet.getRange('E10').setValue(buContact.name);
+    newReadinessSheet.getRange('E11').setValue(buContact.name);
+    newReadinessSheet.getRange('E12').setValue(buContact.name);
+    newReadinessSheet.getRange('E13').setValue(buContact.name);
+    newReadinessSheet.getRange('E14').setValue(buContact.name);
+    newReadinessSheet.getRange('E15').setValue(buContact.name);
+    newReadinessSheet.getRange('E16').setValue(buContact.name);
+    newReadinessSheet.getRange('E17').setValue(buContact.name);
+    addBuContactsAsEditors(newReadinessSheet, buContact.email);
   }
   
-  var buContact = getBuContactNames(productName, 'SA');
+  var buContact = getBuContacts(productName, 'SA', lookupSheet);
   if (buContact != '') {    
-    newReadinessSheet.getRange('E27').setValue(buContact);
-    newReadinessSheet.getRange('E28').setValue(buContact);
-    newReadinessSheet.getRange('E29').setValue(buContact);
-    newReadinessSheet.getRange('E30').setValue(buContact);
-    newReadinessSheet.getRange('E31').setValue(buContact);
-    newReadinessSheet.getRange('E32').setValue(buContact);
-    newReadinessSheet.getRange('E33').setValue(buContact);
-    newReadinessSheet.getRange('E34').setValue(buContact);
-    newReadinessSheet.getRange('E35').setValue(buContact);
+    newReadinessSheet.getRange('E27').setValue(buContact.name);
+    newReadinessSheet.getRange('E28').setValue(buContact.name);
+    newReadinessSheet.getRange('E29').setValue(buContact.name);
+    newReadinessSheet.getRange('E30').setValue(buContact.name);
+    newReadinessSheet.getRange('E31').setValue(buContact.name);
+    newReadinessSheet.getRange('E32').setValue(buContact.name);
+    newReadinessSheet.getRange('E33').setValue(buContact.name);
+    newReadinessSheet.getRange('E34').setValue(buContact.name);
+    newReadinessSheet.getRange('E35').setValue(buContact.name);
+    addBuContactsAsEditors(newReadinessSheet, buContact.email);
   }
 
-  buContact = getBuContactNames(productName, 'Consulting');
+  buContact = getBuContacts(productName, 'Consulting', lookupSheet);
   if (buContact != '') {    
-    newReadinessSheet.getRange('E42').setValue(buContact);
+    newReadinessSheet.getRange('E42').setValue(buContact.name);
+    addBuContactsAsEditors(newReadinessSheet, buContact.email);
   }
 
-  // 6. set a note for changelog
+  // 8. set a note for changelog
   //usernameSubmitted = usernameSubmitted.split('@')[0];
   //var changelogMessage = (gaDateAvailable) ? usernameSubmitted + ' - generated document and set dates' : usernameSubmitted + ' - generated document without dates';
   
@@ -85,11 +96,8 @@ function onFormSubmit(e) {
  * Retrieves a product link for the Product Portal page based on a lookup
  *
 ***************************************************************************/
-function getProductPageLink(productName) {
+function getProductPageLink(productName,lookupSheet) {
   
-  var lookupFile = DriveApp.getFileById("1HuvyzrEv9HChzstVeAwHtAFlHvT3EW5o2O8BH0O4XyI");
-  var lookupSheet = SpreadsheetApp.open(lookupFile);
-
   var column = lookupSheet.getRange("A:A");
   var values = column.getValues();
   var row = 0;
@@ -112,14 +120,13 @@ function getProductPageLink(productName) {
  * Retrieves the BU contact details for a particular product based on a lookup
  *
 *********************************************************************************/
-function getBuContactNames(productName, role) {
+function getBuContacts(productName, role, lookupSheet) {
   
-  var lookupFile = DriveApp.getFileById("1HuvyzrEv9HChzstVeAwHtAFlHvT3EW5o2O8BH0O4XyI");
-  var lookupSheet = SpreadsheetApp.open(lookupFile);
-  var lookupSheet_Consulting = lookupSheet.getSheetByName(role);
-  lookupSheet_Consulting.activate();
-  
-  var column = lookupSheet_Consulting.getRange("A:A");
+  var buContact = {};
+  var productRow;
+  var lookupSheet_role = lookupSheet.getSheetByName(role);
+  lookupSheet_role.activate();  
+  var column = lookupSheet_role.getRange("A:A");
   var values = column.getValues();
   var row = 0;
   
@@ -128,11 +135,12 @@ function getBuContactNames(productName, role) {
   }
   
   if (values[row][0] === productName) {
-    var productRow = row+1;
-    return lookupSheet.getRange("C"+productRow).getValue();
+    productRow = row+1;
+    buContact.name = lookupSheet.getRange("C"+productRow).getValue();
+    buContact.email = lookupSheet.getRange("D"+productRow).getValue();
+    return buContact;
   }
 
-  SpreadsheetApp.flush();
   return '';
 }
 
@@ -143,4 +151,21 @@ function getBuContactNames(productName, role) {
 ***********************************************************/
 function timestampStringToDate(dateTimeString) {
   return stringToDate(dateTimeString.split(' ')[0]);
+}  
+
+/***********************************************************
+ *
+ * Adds editors to the file handle
+ *
+***********************************************************/
+function addBuContactsAsEditors(fileHandle, emails) {
+  
+  var emailStrs = emails.split(',');
+  Logger.log("The following emails are going to be added as Editors");
+  Logger.log(emailStrs);
+  for (i = 0; i < emailStrs.length; i++){
+     fileHandle.addEditor(emailStrs[i]);
+  }
+  
+  return;
 }
