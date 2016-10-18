@@ -12,29 +12,23 @@ function onFormSubmit(e) {
   var usernameSubmitted = e.values[5];
   
   
-  // 1. get a handle on the template sheet
+  // 1. get a handle on the template sheet and Readiness folder
   var readinessFolder = DriveApp.getFolderById("0B-wBW0Im3w_zbVFtakxidk9wM28"); // Readiness folder Id
-
-  // old template file below
-  // var templateFile = DriveApp.getFileById("1kMdaWCYhucaUKWkwSHc65fF4QqsnM8JIaTaFyaXBU5I");
   var templateFile = DriveApp.getFileById("12tk2Mm1RCnKq-U0bKgpmt0aZ9Yk4trwAnSSiRF-fnyU");
   
   // 2. make a copy of it and store in the Readiness folder
+  //    also set the owner to person who filled out the form
   var newReadinessSheetName = productName + " " + productVersion + " - Readiness Status and Info";
   var newReadinessSheetHandle = DriveApp.getFileById(templateFile.getId()).makeCopy(newReadinessSheetName, readinessFolder);
   newReadinessSheetHandle.setOwner(usernameSubmitted);
 
-  // 3. update the dates
   var newReadinessSheet = SpreadsheetApp.open(newReadinessSheetHandle);
   
-  // 4. Open INTERNAL: PnT Lookups file
+  // 3. Open INTERNAL: PnT Lookups file
   var lookupFile = DriveApp.getFileById("1HuvyzrEv9HChzstVeAwHtAFlHvT3EW5o2O8BH0O4XyI");
   var lookupSheet = SpreadsheetApp.open(lookupFile);  
   
-  // 5. Add Common Editors for the Readiness sheet
-  var commonUsers = "lspangle@redhat.com, mrandall@redhat.com, mikmorri@redhat.com";                    
-//  addBuContactsAsEditors(newReadinessSheet, commonUsers);
-
+  // 4. update the GA and Beta dates
   if (productGaDate != '') {
     newReadinessSheet.getRange('C3').setValue(productGaDate);
   }
@@ -43,13 +37,13 @@ function onFormSubmit(e) {
     newReadinessSheet.getRange('C4').setValue(productBetaDate);
   }
     
-  // 6. update the PP link
+  // 5. update the PP link
   var productPageLink = getProductPageLink(productName, lookupSheet);
   if (productPageLink != '') {
     newReadinessSheet.getRange('C2').setValue(productPageLink);
   }
   
-  // 7. update the BU contact names and editors
+  // 6. update the BU contact names
   var buContact = getBuContacts(productName, 'Sales', lookupSheet);
   if (buContact != '') {
     newReadinessSheet.getRange('E10').setValue(buContact.name);
@@ -60,7 +54,6 @@ function onFormSubmit(e) {
     newReadinessSheet.getRange('E15').setValue(buContact.name);
     newReadinessSheet.getRange('E16').setValue(buContact.name);
     newReadinessSheet.getRange('E17').setValue(buContact.name);
-    addBuContactsAsEditors(newReadinessSheet, buContact.email);
   }
   
   var buContact = getBuContacts(productName, 'SA', lookupSheet);
@@ -74,21 +67,12 @@ function onFormSubmit(e) {
     newReadinessSheet.getRange('E33').setValue(buContact.name);
     newReadinessSheet.getRange('E34').setValue(buContact.name);
     newReadinessSheet.getRange('E35').setValue(buContact.name);
-    addBuContactsAsEditors(newReadinessSheet, buContact.email);
   }
 
   buContact = getBuContacts(productName, 'Consulting', lookupSheet);
   if (buContact != '') {    
     newReadinessSheet.getRange('E42').setValue(buContact.name);
-    addBuContactsAsEditors(newReadinessSheet, buContact.email);
   }
-
-  // 8. set a note for changelog
-  //usernameSubmitted = usernameSubmitted.split('@')[0];
-  //var changelogMessage = (gaDateAvailable) ? usernameSubmitted + ' - generated document and set dates' : usernameSubmitted + ' - generated document without dates';
-  
-  //newReadinessSheet.getRange('A15').setValue(timestampStringToDate(dateTimeSubmitted));
-  //newReadinessSheet.getRange('B15').setValue(changelogMessage);
 }
 
 /**************************************************************************
@@ -151,21 +135,4 @@ function getBuContacts(productName, role, lookupSheet) {
 ***********************************************************/
 function timestampStringToDate(dateTimeString) {
   return stringToDate(dateTimeString.split(' ')[0]);
-}  
-
-/***********************************************************
- *
- * Adds editors to the file handle
- *
-***********************************************************/
-function addBuContactsAsEditors(fileHandle, emails) {
-  
-  var emailStrs = emails.split(',');
-  Logger.log("The following emails are going to be added as Editors");
-  Logger.log(emailStrs);
-  for (i = 0; i < emailStrs.length; i++){
-     fileHandle.addEditor(emailStrs[i]);
-  }
-  
-  return;
 }
